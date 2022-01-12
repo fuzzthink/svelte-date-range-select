@@ -3,11 +3,15 @@
 
   export let startDateMin;
   export let endDateMax;
-  export let name;
+  export let name = '';
   export let heading;
   export let labels;
-  export let endDateId;
-  export let startDateId;
+  export let endDateId = 'endDate';
+  export let startDateId = 'startDate';
+  export let disabled = false
+  export let startISODate = ''
+  export let endISODate = ''
+
   
   let defaultLabels = {
     notSet: 'not set',
@@ -15,8 +19,8 @@
     lessThan: 'less than',
     range: 'range',
     day: 'day',
-    days: 'days!!',
-    apply: 'Apply'
+    days: 'days',
+    apply: 'Set'
   }
 
   labels = {...defaultLabels, ...labels};
@@ -34,19 +38,21 @@
 
   const dispatch = createEventDispatcher();
 
-  let today = new Date();
+  const startTS = startISODate ? dateToTimeStamp(startISODate) : 0
+  const endTS = endISODate ? dateToTimeStamp(endISODate) : 0
+  const today = new Date();
 
   const todayRfc = timeStampToRfc(today);
-  const todayTimestamp = dateToTimeStamp(today);
+  const initTimestamp = dateToTimeStamp(today);
   const startDateMinTimestamp = dateToTimeStamp(startDateMin);
   const endDateMaxTimestamp = dateToTimeStamp(endDateMax);
   const startDateMinRfc = timeStampToRfc(startDateMin);
   const endDateMaxRfc = timeStampToRfc(endDateMax);
 
-  let sliderStartTimestamp = todayTimestamp;
-  let sliderEndTimestamp = todayTimestamp;
-  let startDate = todayRfc;
-  let endDate = todayRfc;
+  let sliderStartTimestamp = startTS || initTimestamp;
+  let sliderEndTimestamp = endTS || initTimestamp;
+  let startDate = startTS ? timeStampToRfc(startTS) : todayRfc;
+  let endDate = endTS ? timeStampToRfc(endTS) : todayRfc;
 
   let lessThan = false;
   let greaterThan = false;
@@ -131,11 +137,15 @@
 
 <style>
   .applyButton {
-    width: var(--applyButtonWidth, 25px);
+    width: var(--applyButtonWidth, 2.2rem);
     height: var(--applyButtonHeight, 25px);
     background-color: var(--applyButtonBackgroundColor, #007bff);
     color: var(--applyButtonColor, #fff);
-    padding: var(--applyButtonPadding, 0px);
+    padding: var(--applyButtonPadding, 5px);
+    padding-right: 7px;
+  }
+  .applyButton.disabled {
+    background-color: #CBCBCB;
   }
   .sliderEnd {
     background: var(--sliderEndBackgroundColor, #007bff);
@@ -168,7 +178,6 @@
 
 <span class="heading">
   {heading}
-  
   {#if !startDate && !endDate}
     {labels.notSet}
   {:else if lessThan}
@@ -179,8 +188,7 @@
     {labels.range} {daysInDateRange}
   {/if}
 </span>
-
-<br />
+<br/>
 
 <input
   type="date"
@@ -188,27 +196,26 @@
   class='dateSelect'
   min={startDateMinRfc}
   max={endDateMaxRfc}
+  {disabled}
   bind:value={startDate}
-  on:input={() => {
-    dateOrSliderChange('startDate');
-  }} />
-
+  on:input={() => dateOrSliderChange('startDate')}
+/>
 <input
   type="date"
   id={endDateId}
   class='dateSelect'
   min={startDateMinRfc}
   max={endDateMaxRfc}
+  {disabled}
   bind:value={endDate}
-  on:input={() => {
-    dateOrSliderChange('endDate');
-  }} />
+  on:input={() => dateOrSliderChange('endDate')}
+/>
 
-<button class="applyButton" on:click={apply} title={labels.apply}>
+<button class="applyButton" class:disabled={disabled} {disabled}
+  title={labels.apply} on:click={apply}>
   {labels.apply}
 </button>
-
-<br />
+<br/>
 
 <input
   type="range"
@@ -218,10 +225,9 @@
   max={endDateMaxTimestamp}
   step="86400000"
   title={new Date(startDate)}
-  on:input={() => {
-    dateOrSliderChange('sliderStartTimestamp');
-  }} />
-
+  {disabled}
+  on:input={() => dateOrSliderChange('sliderStartTimestamp')}
+/>
 <input
   type="range"
   class="sliderEnd"
@@ -230,6 +236,6 @@
   max={endDateMaxTimestamp}
   step="86400000"
   title={new Date(endDate)}
-  on:input={() => {
-    dateOrSliderChange('sliderEndTimestamp');
-  }} />
+  {disabled}
+  on:input={() => dateOrSliderChange('sliderEndTimestamp')}
+/>
